@@ -56,6 +56,11 @@
         chainId = newChainId;
     }
 
+    function resolveChainName(chainId: string | null): string {
+        const parsed = Number(chainId);
+        return chainIds[parsed] ?? `unknown (${chainId})`;
+    }
+
     onMount(async () => {
         ethereumProvider = await detectProvider();
         if (ethereumProvider?.isConnected()) {
@@ -99,7 +104,7 @@
         {#if connectedAddress}
             connected to <pre>{connectedAddress}</pre>
             via chain
-            <pre>{(chainId ? chainIds[parseInt(chainId)] : null) ?? `unknown (${chainId})`}</pre>
+            <pre>{resolveChainName(chainId)}</pre>
         {:else}
             <button on:click={() => connect()}>Connect</button>
         {/if}
