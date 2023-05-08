@@ -1,0 +1,13 @@
+{
+    "bracketSameLine": false,
+    "bracketSpacing": true,
+    "singleQuote": false,
+    "trailingComma": "es5",
+    "printWidth": 140,
+    "plugins": ["prettier-plugin-multiline-arrays", "prettier-plugin-svelte"],
+    "pluginSearchDirs": ["."],
+    "quoteProps": "consistent",
+    "svelteSortOrder": "options-scripts-styles-markup",
+    "multilineArraysWrapThreshold": 4,
+    "overrides": [{ "files": "*.svelte", "options": { "parser": "svelte" } }]
+}
