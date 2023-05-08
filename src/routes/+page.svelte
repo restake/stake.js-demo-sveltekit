@@ -3,7 +3,7 @@
     import detectProvider from "@metamask/detect-provider";
 
     import noMetamask from "$lib/img/no-metamask.jpg";
-    import { chainIds, isMetaMaskError, type MetaMaskEthereumProvider } from "../lib/metamask";
+    import { chainIds, isMetaMaskError, type MetaMaskEthereumProvider, type MetaMaskPermission } from "../lib/metamask";
 
     let errorMessage: string | null = null;
     let connectedAddress: string | null;
@@ -14,10 +14,19 @@
     // Hide picture until mount is done - don't want to make it flash
     let mountDone = false;
 
-    onMount(async () => {
-        ethereumProvider = await detectProvider();
-        mountDone = true;
-    });
+    async function loadAccount() {
+        if (!ethereumProvider) {
+            throw new Error("No MetaMask?");
+        }
+
+        chainId = await ethereumProvider.request({ method: "eth_chainId" });
+        const accounts: string[] = await ethereumProvider.request({ method: "eth_requestAccounts" });
+        if (accounts.length < 1) {
+            throw new Error("No ethereum accounts found?");
+        }
+
+        connectedAddress = accounts[0];
+    }
 
     async function connect() {
         if (!ethereumProvider) {
@@ -29,32 +38,53 @@
         }
 
         try {
-            chainId = await ethereumProvider.request({ method: "eth_chainId" });
+            await loadAccount();
         } catch (e) {
-            console.error(e);
             if (isMetaMaskError(e)) {
-                errorMessage = `Failed to get current chain ID: ${e.message}`;
+                errorMessage = e.message;
+            } else if (e instanceof Error) {
+                errorMessage = e.message;
             }
-            return;
-        }
-        try {
-            const accounts = await ethereumProvider.request({ method: "eth_requestAccounts" });
-            if (accounts.length > 0) {
-                connectedAddress = accounts[0];
-            } else {
-                errorMessage = "No ethereum accounts found?";
-                return;
-            }
-        } catch (e) {
             console.error(e);
-            if (isMetaMaskError(e)) {
-                errorMessage = `Failed to get accounts: ${e.message}`;
-            }
             return;
         }
 
         errorMessage = "";
     }
+
+    function handleNetworkChange(newChainId: string) {
+        chainId = newChainId;
+    }
+
+    onMount(async () => {
+        ethereumProvider = await detectProvider();
+        if (ethereumProvider?.isConnected()) {
+            // Try loading an account automatically when we have at least
+            // one permission granted.
+            let loadAccountAutomatically = false;
+
+            const permissions: MetaMaskPermission[] = await ethereumProvider.request({ method: "wallet_getPermissions" });
+            if (permissions.length > 0) {
+                loadAccountAutomatically = permissions.find((permission) => permission.parentCapability === "eth_accounts") !== undefined;
+            }
+
+            if (loadAccountAutomatically) {
+                try {
+                    await loadAccount();
+                } catch (e) {
+                    console.error("Failed to load account automatically", e);
+                }
+            }
+
+            ethereumProvider.addListener("chainChanged", handleNetworkChange);
+        }
+
+        mountDone = true;
+
+        return () => {
+            ethereumProvider?.removeListener("chainChanged", handleNetworkChange);
+        };
+    });
 </script>
 
 <style>

@@ -9,6 +9,14 @@ export interface MetaMaskEthereumProvider {
     removeAllListeners(event?: string | symbol): this;
 }
 
+export type MetaMaskPermission = {
+    caveats: unknown[];
+    date: number;
+    id: string;
+    invoker: string;
+    parentCapability: string;
+};
+
 export type MetaMaskError = {
     code: number;
     message: string;
