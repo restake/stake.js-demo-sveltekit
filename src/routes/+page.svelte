@@ -63,10 +63,14 @@
             // one permission granted.
             let loadAccountAutomatically = false;
 
+            const accounts: string[] = await ethereumProvider.request({ method: "eth_accounts" });
+            /*
             const permissions: MetaMaskPermission[] = await ethereumProvider.request({ method: "wallet_getPermissions" });
             if (permissions.length > 0) {
                 loadAccountAutomatically = permissions.find((permission) => permission.parentCapability === "eth_accounts") !== undefined;
             }
+            */
+            loadAccountAutomatically = accounts.length > 0;
 
             if (loadAccountAutomatically) {
                 try {
