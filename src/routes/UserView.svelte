@@ -26,11 +26,11 @@
 
         // Throw result away, as store listens for account changes
         await interceptError(provider.request({ method: "eth_requestAccounts" }))
-            .catch((error) => {
-                console.error("Connect failed", error);
-            })
             .then(() => {
                 errorMessage.set(undefined);
+            })
+            .catch((error) => {
+                console.error("Connect failed", error);
             });
     }
 
