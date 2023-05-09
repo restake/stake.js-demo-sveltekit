@@ -20,11 +20,11 @@ export type MetaMaskPermission = {
 export type MetaMaskError = {
     code: number;
     message: string;
-    stack: string;
+    stack?: string;
 };
 
 export function isMetaMaskError(t: any): t is MetaMaskError {
-    return "code" in t && "message" in t && "stack" in t;
+    return "code" in t && "message" in t;
 }
 
 export const chainIds: Record<number, string | undefined> = {
