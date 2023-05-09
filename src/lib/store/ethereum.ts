@@ -2,15 +2,15 @@ import { onMount } from "svelte";
 import { writable } from "svelte/store";
 import type { Readable } from "svelte/store";
 
-export function useChainId(ethereumProvider: typeof window.ethereum | null): Readable<string> {
-    const { subscribe, set } = writable<string>();
+export function useChainId(ethereumProvider: typeof window.ethereum | null): Readable<string | undefined> {
+    const { subscribe, set } = writable<string | undefined>();
 
     function handleChainIdChange(newChainId: string) {
         set(newChainId);
     }
 
     onMount(async () => {
-        const chainId: string | null = (await ethereumProvider?.request({ method: "eth_chainId" })) ?? null;
+        const chainId: string | undefined = (await ethereumProvider?.request({ method: "eth_chainId" })) ?? undefined;
         set(chainId);
 
         ethereumProvider?.addListener("chainChanged", handleChainIdChange);

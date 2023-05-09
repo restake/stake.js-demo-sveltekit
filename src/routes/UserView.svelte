@@ -8,7 +8,11 @@
     let chainId = useChainId(provider);
     let connectedAddress = useAccount(provider);
 
-    function resolveChainName(chainId: string | null): string {
+    function resolveChainName(chainId: string | undefined): string {
+        if (!chainId) {
+            return "unknown";
+        }
+
         const parsed = Number(chainId);
         return chainIds[parsed] ?? `unknown (${chainId})`;
     }
