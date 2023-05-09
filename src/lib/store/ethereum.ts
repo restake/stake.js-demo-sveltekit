@@ -49,3 +49,32 @@ export function useAccount(ethereumProvider: typeof window.ethereum | null): Rea
         subscribe,
     };
 }
+
+export function useConnected(ethereumProvider: typeof window.ethereum | null): Readable<boolean> {
+    const { set, subscribe } = writable<boolean>(false);
+
+    function handleConnected() {
+        set(true);
+    }
+
+    function handleDisconnected() {
+        set(false);
+    }
+
+    onMount(async () => {
+        if (ethereumProvider?.isConnected()) {
+            set(true);
+        }
+
+        ethereumProvider?.addListener("connect", handleConnected);
+        ethereumProvider?.addListener("disconnect", handleDisconnected);
+        return () => {
+            ethereumProvider?.removeListener("connect", handleConnected);
+            ethereumProvider?.removeListener("disconnect", handleDisconnected);
+        };
+    });
+
+    return {
+        subscribe,
+    };
+}

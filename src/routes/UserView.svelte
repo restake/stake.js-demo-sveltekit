@@ -1,9 +1,10 @@
 <script lang="ts">
     import { chainIds, type MetaMaskEthereumProvider } from "$lib/metamask";
     import errorMessage, { interceptError } from "$lib/store/errorMessage";
-    import { useAccount, useChainId } from "$lib/store/ethereum";
+    import { useAccount, useChainId, useConnected } from "$lib/store/ethereum";
 
     export let provider: MetaMaskEthereumProvider & typeof window.ethereum;
+    let connected = useConnected(provider);
     let chainId = useChainId(provider);
     let connectedAddress = useAccount(provider);
 
@@ -27,6 +28,7 @@
             });
     }
 
+    $: console.log("RPC connection ready", $connected);
     $: console.log("Using network", $chainId);
     $: console.log("Using account", $connectedAddress);
 </script>
@@ -38,7 +40,9 @@
 </style>
 
 <div>
-    {#if $connectedAddress}
+    {#if !$connected}
+        MetaMask RPC connection is not ready
+    {:else if $connectedAddress}
         connected to <pre>{$connectedAddress}</pre>
         via chain
         <pre>{resolveChainName($chainId)}</pre>
