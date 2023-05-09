@@ -2,7 +2,11 @@ import { onMount } from "svelte";
 import { writable } from "svelte/store";
 import type { Readable } from "svelte/store";
 
-export function useChainId(ethereumProvider: typeof window.ethereum | null): Readable<string | undefined> {
+export type ChainIdStore = Readable<string | undefined> & {
+    switch(newChainId: string): Promise<void>;
+};
+
+export function useChainId(ethereumProvider: typeof window.ethereum | null): ChainIdStore {
     const { subscribe, set } = writable<string | undefined>();
 
     function handleChainIdChange(newChainId: string) {
@@ -19,8 +23,25 @@ export function useChainId(ethereumProvider: typeof window.ethereum | null): Rea
         };
     });
 
+    async function switchChain(newChainId: string): Promise<void> {
+        if (!ethereumProvider) {
+            set(newChainId);
+            return;
+        }
+
+        await ethereumProvider.request({
+            method: "wallet_switchEthereumChain",
+            params: [
+                {
+                    chainId: newChainId,
+                },
+            ],
+        });
+    }
+
     return {
         subscribe,
+        switch: switchChain,
     };
 }
 

@@ -2,12 +2,15 @@
     import { chainIds, type MetaMaskEthereumProvider } from "$lib/metamask";
     import errorMessage, { interceptError } from "$lib/store/errorMessage";
     import { useAccount, useChainId, useConnected } from "$lib/store/ethereum";
+    import { get } from "svelte/store";
 
     export let provider: MetaMaskEthereumProvider & typeof window.ethereum;
     let connected = useConnected(provider);
     let chainId = useChainId(provider);
     let connectedAddress = useAccount(provider);
 
+    let selectedChainId = $chainId;
+    let selectInProgress = false;
     let lastSignedData: string | undefined = undefined;
 
     function resolveChainName(chainId: string | undefined): string {
@@ -17,6 +20,25 @@
 
         const parsed = Number(chainId);
         return chainIds[parsed] ?? `unknown (${chainId})`;
+    }
+
+    async function changeNetwork(event: Event) {
+        const currentChainId = $chainId;
+        const newChainId = selectedChainId;
+        if (!newChainId) {
+            return;
+        }
+
+        try {
+            errorMessage.set(undefined);
+            selectInProgress = true;
+            await interceptError(chainId.switch(newChainId));
+            selectedChainId = newChainId;
+        } catch (err) {
+            selectedChainId = currentChainId;
+        } finally {
+            selectInProgress = false;
+        }
     }
 
     async function connect() {
@@ -51,6 +73,7 @@
     $: console.log("RPC connection ready", $connected);
     $: console.log("Using network", $chainId);
     $: console.log("Using account", $connectedAddress);
+    $: selectedChainId = $chainId;
 </script>
 
 <style>
@@ -66,7 +89,11 @@
         <div>
             connected to <pre>{$connectedAddress}</pre>
             via chain
-            <pre>{resolveChainName($chainId)}</pre>
+            <select bind:value={selectedChainId} on:change={(event) => changeNetwork(event)} disabled={selectInProgress}>
+                {#each Object.entries(chainIds) as [id, name]}
+                    <option value="0x{parseInt(id).toString(16)}">{name}</option>
+                {/each}
+            </select>
         </div>
         <div>
             <button on:click={() => signExample()}>Sign raw data</button>
